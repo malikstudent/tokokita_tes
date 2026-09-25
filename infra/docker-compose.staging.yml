@@ -1,11 +1,9 @@
 services:
   web:
-    build:
-      context: ..
-      dockerfile: app/Dockerfile
+    image: ghcr.io/malikstudent/tokokita_tes:latest
     container_name: tokokita_web_staging
     env_file:
-    - ../.env.example
+      - ../.env.example
     depends_on:
       - db
     networks:

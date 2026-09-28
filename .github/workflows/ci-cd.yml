@@ -1,14 +1,17 @@
-name: CI/CD Tokokita
+name: CI/CD Tokokita Staging
 
 on:
   push:
     branches:
       - staging
-      - main
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -40,13 +43,13 @@ jobs:
           tags: ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
 
       - name: Deploy Staging
-        if: github.ref_name == 'staging'
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
         run: |
-          IMAGE_TAG="${IMAGE_TAG}" docker compose -f infra/docker-compose.staging.yml pull
-          IMAGE_TAG="${IMAGE_TAG}" docker compose -f infra/docker-compose.staging.yml up -d
+          docker compose \
+            -f infra/docker-compose.staging.yml \
+            pull
 
-      - name: Deploy Production
-        if: github.ref_name == 'main'
-        run: |
-          docker compose -f infra/docker-compose.prod.yml pull
-          docker compose -f infra/docker-compose.prod.yml up -d
+          docker compose \
+            -f infra/docker-compose.staging.yml \
+            up -d

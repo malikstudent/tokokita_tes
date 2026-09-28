@@ -1,0 +1,98 @@
+name: Promote Tokokita to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_digest:
+        description: "GHCR image digest tested in staging"
+        required: true
+        type: string
+      confirmation:
+        description: "Type PROMOTE to confirm production deployment"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    runs-on: [self-hosted, Linux, X64]
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Verify Confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "PROMOTE" ]; then
+            echo "Invalid confirmation."
+            exit 1
+          fi
+
+      - name: Validate Image Digest
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          case "$IMAGE_DIGEST" in
+            sha256:*)
+              echo "Image digest format is valid."
+              ;;
+            *)
+              echo "Invalid image digest."
+              exit 1
+              ;;
+          esac
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Exact Production Image
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          docker compose \
+            --env-file /etc/tokokita/prod.env \
+            -f infra/docker-compose.prod.yml \
+            pull
+
+      - name: Deploy Production
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          docker compose \
+            --env-file /etc/tokokita/prod.env \
+            -f infra/docker-compose.prod.yml \
+            up -d
+
+      - name: Verify Production Image
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          IMAGE_REPOSITORY: ghcr.io/${{ github.repository }}
+        run: |
+          EXPECTED_IMAGE="${IMAGE_REPOSITORY}@${IMAGE_DIGEST}"
+          DEPLOYED_IMAGE=$(docker inspect tokokita_web_prod --format '{{.Config.Image}}')
+
+          echo "Expected image: $EXPECTED_IMAGE"
+          echo "Deployed image: $DEPLOYED_IMAGE"
+
+          if [ "$DEPLOYED_IMAGE" != "$EXPECTED_IMAGE" ]; then
+            echo "Production image does not match the requested digest."
+            exit 1
+          fi
+
+          echo "Production image verified successfully."

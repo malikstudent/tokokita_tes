@@ -7,7 +7,7 @@ services:
     depends_on:
       - db
     networks:
-      - tokonet_staging
+      - tokonet
 
   db:
     image: postgres:15
@@ -20,7 +20,7 @@ services:
     volumes:
       - dbdata_staging:/var/lib/postgresql/data
     networks:
-      - tokonet_staging
+      - tokonet
 
   nginx:
     image: nginx:latest
@@ -32,10 +32,10 @@ services:
     depends_on:
       - web
     networks:
-      - tokonet_staging
+      - tokonet
 
 networks:
-  tokonet_staging:
+  tokonet:
 
 volumes:
   dbdata_staging:

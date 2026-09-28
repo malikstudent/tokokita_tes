@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokokita — Belanja Mudah</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="navbar">
+    <div class="container nav-content">
+        <div class="brand">
+            <span class="brand-icon">T</span>
+            <span>Tokokita</span>
+        </div>
+
+        <nav>
+            <a href="#beranda">Beranda</a>
+            <a href="#kategori">Kategori</a>
+            <a href="#produk">Produk</a>
+        </nav>
+
+        <button class="cart-button">
+            🛒 Keranjang
+        </button>
+    </div>
+</header>
+
+
+<main>
+
+<section class="hero" id="beranda">
+    <div class="container hero-content">
+
+        <div class="hero-text">
+            <span class="badge">TOKOKITA MARKETPLACE</span>
+
+            <h1>
+                Belanja mudah,<br>
+                <span>harga bersahabat.</span>
+            </h1>
+
+            <p>
+                Temukan berbagai produk pilihan untuk kebutuhan
+                sehari-hari hanya di Tokokita.
+            </p>
+
+            <a href="#produk" class="primary-button">
+                Mulai Belanja
+            </a>
+        </div>
+
+        <div class="hero-card">
+            <div class="hero-card-icon">🛍️</div>
+            <h3>Belanja Pilihanmu</h3>
+            <p>Produk pilihan dengan harga yang bersahabat.</p>
+        </div>
+
+    </div>
+</section>
+
+
+<section class="categories" id="kategori">
+    <div class="container">
+
+        <div class="section-heading">
+            <span>KATEGORI</span>
+            <h2>Pilih sesuai kebutuhanmu</h2>
+        </div>
+
+        <div class="category-grid">
+
+            <div class="category-card">
+                <div class="category-icon">📱</div>
+                <h3>Elektronik</h3>
+                <p>Perangkat dan aksesoris</p>
+            </div>
+
+            <div class="category-card">
+                <div class="category-icon">👕</div>
+                <h3>Fashion</h3>
+                <p>Gaya untuk setiap hari</p>
+            </div>
+
+            <div class="category-card">
+                <div class="category-icon">🏠</div>
+                <h3>Rumah</h3>
+                <p>Kebutuhan rumah tangga</p>
+            </div>
+
+            <div class="category-card">
+                <div class="category-icon">🎒</div>
+                <h3>Aksesoris</h3>
+                <p>Lengkapi gaya harianmu</p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+
+<section class="products" id="produk">
+    <div class="container">
+
+        <div class="section-heading product-heading">
+            <div>
+                <span>PRODUK PILIHAN</span>
+                <h2>Favorit Tokokita</h2>
+            </div>
+
+            <span id="product-status" class="status">
+                Memuat produk...
+            </span>
+        </div>
+
+        <div id="product-list" class="product-grid">
+        </div>
+
+    </div>
+</section>
+
+</main>
+
+
+<footer>
+    <div class="container footer-content">
+        <div>
+            <strong>Tokokita</strong>
+            <p>Tempat belanja sederhana untuk kebutuhan sehari-hari.</p>
+        </div>
+
+        <div>
+            <span>© 2026 Tokokita</span>
+        </div>
+    </div>
+</footer>
+
+
+<script>
+async function loadProducts() {
+    const productList = document.getElementById('product-list');
+    const status = document.getElementById('product-status');
+
+    try {
+        const response = await fetch('/products');
+
+        if (!response.ok) {
+            throw new Error('Gagal mengambil produk');
+        }
+
+        const products = await response.json();
+
+        productList.innerHTML = '';
+
+        if (products.length === 0) {
+            productList.innerHTML = `
+                <div class="empty-state">
+                    Belum ada produk tersedia.
+                </div>
+            `;
+
+            status.textContent = '0 produk';
+            return;
+        }
+
+        products.forEach((product, index) => {
+
+            const icons = ['🎧', '⌚', '🎒', '⌨️', '📱', '👟'];
+
+            const card = document.createElement('article');
+            card.className = 'product-card';
+
+            card.innerHTML = `
+                <div class="product-image">
+                    ${icons[index % icons.length]}
+                </div>
+
+                <div class="product-info">
+                    <span class="product-category">
+                        Produk pilihan
+                    </span>
+
+                    <h3>${product.name}</h3>
+
+                    <div class="product-bottom">
+                        <strong>
+                            Rp ${Number(product.price).toLocaleString('id-ID')}
+                        </strong>
+
+                        <button onclick="addToCart('${product.name}')">
+                            + Keranjang
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            productList.appendChild(card);
+        });
+
+        status.textContent = `${products.length} produk`;
+
+    } catch (error) {
+        console.error(error);
+
+        status.textContent = 'Gagal memuat';
+
+        productList.innerHTML = `
+            <div class="error-state">
+                <strong>Produk belum dapat dimuat.</strong>
+                <p>Pastikan database Tokokita sedang berjalan.</p>
+            </div>
+        `;
+    }
+}
+
+
+function addToCart(productName) {
+    alert(`${productName} ditambahkan ke keranjang.`);
+}
+
+
+loadProducts();
+</script>
+
+</body>
+</html>

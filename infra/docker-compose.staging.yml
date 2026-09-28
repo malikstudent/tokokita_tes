@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/malikstudent/tokokita_tes:latest
+    image: ghcr.io/malikstudent/tokokita_tes:${IMAGE_TAG}
     container_name: tokokita_web_staging
     env_file:
       - ../.env.example

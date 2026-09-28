@@ -18,6 +18,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Set Image Tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -34,13 +37,13 @@ jobs:
           context: .
           file: ./app/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
 
       - name: Deploy Staging
         if: github.ref_name == 'staging'
         run: |
-          docker compose -f infra/docker-compose.staging.yml pull
-          docker compose -f infra/docker-compose.staging.yml up -d
+          IMAGE_TAG="${IMAGE_TAG}" docker compose -f infra/docker-compose.staging.yml pull
+          IMAGE_TAG="${IMAGE_TAG}" docker compose -f infra/docker-compose.staging.yml up -d
 
       - name: Deploy Production
         if: github.ref_name == 'main'
